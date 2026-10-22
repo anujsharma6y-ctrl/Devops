@@ -122,3 +122,112 @@ Run `terraform apply -auto-approve` immediately
 Check answer
 
 After this, we'll cover Lesson 7: Git, validation and Terraform CI/CD.
+Let's move forward. We'll keep Lesson 6 short and continue to Lesson 7: Terraform with Git and CI/CD.
+
+# Lesson 7 — Git, Validation & CI/CD
+
+Time: 20–30 minutes · Junior DevOps essentials
+
+## 1. Why use Git with Terraform?
+
+Git tracks changes in your Terraform code. If someone changes an EC2 instance type or deletes a resource from `main.tf`, Git helps you see what changed and recover earlier versions.
+
+Example workflow:
+
+Write Terraform code
+
+Run `fmt`, `validate`, `plan`
+
+Commit and push to GitHub
+
+CI/CD checks the code
+
+Review plan → approve → apply
+
+## 2. Essential Git commands
+
+Run these inside your Terraform project directory.
+
+```
+git init
+git status
+git add main.tf
+git commit -m "Add Terraform configuration"
+```
+
+What they mean:
+
+| Command             | Purpose                    |
+| ------------------- | -------------------------- |
+| `git init`          | Start Git tracking         |
+| `git status`        | Check changed files        |
+| `git add`           | Prepare changes for commit |
+| `git commit`        | Save a snapshot            |
+| `git log --oneline` | View previous commits      |
+| `git diff`          | See code changes           |
+
+If you already have a Git repository, don't run `git init` again unnecessarily.
+
+## 3. Never upload Terraform secrets or state
+
+Create a `.gitignore` file in the project root:
+
+```
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+```
+
+Important:
+
+- `terraform.tfstate` may contain sensitive infrastructure data.
+- `terraform.tfvars` may contain private configuration values.
+- Never commit AWS access keys, passwords, or private keys.
+- Commit `.tf` files and a suitable `.terraform.lock.hcl` file.
+
+## 4. Terraform checks before deployment
+
+Run these in order:
+
+```
+terraform fmt
+terraform validate
+terraform plan
+```
+
+- `fmt` — formats your code.
+- `validate` — checks Terraform configuration structure.
+- `plan` — previews proposed infrastructure changes.
+
+Remember: `validate` does not prove that AWS permissions, quotas, or every resource setting will work. `plan` also does not guarantee that `apply` will succeed.
+
+## 5. What CI/CD does
+
+A CI/CD pipeline can automatically run formatting, validation, security checks, and a plan whenever you push Terraform code.
+
+For production, the usual safe approach is:
+
+1. Run automated checks.
+2. Generate and review the plan.
+3. Get approval when required.
+4. Apply the reviewed changes using controlled credentials.
+
+Avoid blindly running `terraform apply -auto-approve` on every Git push.
+
+## Quick interview question
+
+A developer pushes Terraform code to GitHub. What should the pipeline normally do before deploying infrastructure?
+
+A. Immediately run `terraform destroy`
+
+B. Run checks and generate a plan for review
+
+C. Delete the Terraform state file
+
+D. Upload AWS access keys to GitHub
+
+Submit answer
+
+After this, we'll finish Lesson 8: one mini-project + junior DevOps interview practice, and your compressed Terraform course will be complete.
