@@ -1,0 +1,124 @@
+# Lesson 6 — Terraform State, Drift and Safe Changes
+
+This lesson is important for junior DevOps interviews and real projects. We'll cover the essential concepts with practical commands.
+
+## 1. What is Terraform state?
+
+Terraform state is a record that maps your Terraform configuration to the real resources Terraform manages in AWS.
+
+For example:
+
+`main.tf`
+
+What you want to create
+
+`terraform.tfstate`
+
+Records managed resources and their attributes
+
+AWS resources
+
+Actual VPC, subnet, EC2, and more
+
+Simple Hinglish: `main.tf` batata hai kya banana hai; state Terraform ko batata hai ki kaunse resources uske management mein hain.
+
+## 2. Important state commands
+
+Run these from your Terraform project directory:
+
+```
+cd ~/terraform-aws
+terraform state list
+```
+
+Lists the resources Terraform tracks.
+
+```
+terraform state show aws_vpc.main
+```
+
+Shows details of the VPC in the state.
+
+```
+terraform show
+```
+
+Displays the current state snapshot in a readable format.
+
+```
+terraform plan
+```
+
+Compares the configuration with the known state and refreshed information from the provider to propose changes.
+
+Important: Don't manually edit or delete `terraform.tfstate`. It can contain sensitive information and is essential to Terraform's resource tracking.
+
+## 3. What is drift?
+
+Drift occurs when the real infrastructure changes outside Terraform, so it no longer matches the configuration.
+
+Example:
+
+- Terraform says an EC2 instance should use one configuration.
+- Someone manually changes its instance type in the AWS console.
+- Terraform detects the difference during a plan or refresh operation.
+- The plan shows whether Terraform proposes changing the resource back or making another adjustment.
+
+To check for differences:
+
+```
+terraform plan
+```
+
+Don't apply until you've understood the proposed changes.
+
+## 4. What happens when you change `main.tf`?
+
+Suppose your EC2 configuration currently contains:
+
+```
+instance_type = "t3.micro"
+```
+
+You change it to:
+
+```
+instance_type = "t3.small"
+```
+
+Then run:
+
+```
+terraform plan
+```
+
+Terraform evaluates the change and shows whether it can update the resource in place or must replace it. The plan is the place to check before applying.
+
+## 5. State safety and locking
+
+| Concept              | Meaning                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| Local state          | State stored on your local machine                                                          |
+| Remote state         | State stored in a shared backend, such as an S3 bucket                                      |
+| State locking        | Helps prevent conflicting simultaneous state operations when supported by the backend       |
+| `terraform refresh`  | Legacy command; generally prefer `terraform plan` or `terraform apply` for normal workflows |
+| `terraform import`   | Associates an existing resource with Terraform state                                        |
+| `terraform state rm` | Removes a resource from state tracking without deleting the real resource                   |
+
+For team projects, remote state and locking are important. Never commit state files to a public GitHub repository.
+
+## 6. Mini-practice
+
+Someone manually changes an EC2 instance in the AWS console. What should you do first to investigate the difference?
+
+Immediately run `terraform destroy`
+
+Run `terraform plan` and inspect the proposed changes
+
+Delete the state file
+
+Run `terraform apply -auto-approve` immediately
+
+Check answer
+
+After this, we'll cover Lesson 7: Git, validation and Terraform CI/CD.
