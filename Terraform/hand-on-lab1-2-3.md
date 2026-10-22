@@ -272,3 +272,124 @@ Requirements:
 Important: `terraform destroy` can delete resources, so review the plan carefully before confirming. For your local-file exercises, it may remove files managed by Terraform.
 
 That's the code we've covered so far, gathered into one revision collection. The next concepts in our shortened plan are `for_each` practice, then functions and dependencies.
+Let's continue with Lesson 3: Terraform Functions and Resource Dependencies. We'll keep it short and practical for junior DevOps.
+
+# Lesson 3 — Functions and dependencies
+
+## 1. Terraform functions
+
+Functions help you process values without writing extra resource blocks.
+
+| Function    | What it does                  | Example result                             |
+| ----------- | ----------------------------- | ------------------------------------------ |
+| `length()`  | Counts items or characters    | `length(["Docker","Git"])` → `2`           |
+| `upper()`   | Converts text to uppercase    | `upper("devops")` → `"DEVOPS"`             |
+| `lower()`   | Converts text to lowercase    | `lower("AWS")` → `"aws"`                   |
+| `join()`    | Combines list items into text | `join(",", ["dev","prod"])` → `"dev,prod"` |
+| `element()` | Gets an item from a list      | `element(["a","b"], 1)` → `"b"`            |
+
+## 2. Practice code — `main.tf`
+
+This example uses `upper()`, `length()`, and `join()`.
+
+```
+
+variable "tools" {
+  type    = list(string)
+  default = ["docker", "jenkins", "terraform"]
+}
+
+locals {
+  tool_count   = length(var.tools)
+  capital_tools = [for tool in var.tools : upper(tool)]
+  tool_message = join(", ", local.capital_tools)
+}
+
+output "total_tools" {
+  value = local.tool_count
+}
+
+output "tool_names" {
+  value = local.tool_message
+}
+
+```
+
+Run:
+
+```
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+terraform output
+```
+
+Expected outputs:
+
+```
+total_tools = 3
+tool_names = "DOCKER, JENKINS, TERRAFORM"
+```
+
+Note: This example defines no infrastructure resources, so `terraform apply` only evaluates the configuration and records outputs.
+
+## 3. Resource references and dependencies
+
+Imagine Terraform must create a file first, then create another file containing the first file's path.
+
+```
+
+resource "local_file" "first" {
+  filename = "${path.module}/first.txt"
+  content  = "First file"
+}
+
+resource "local_file" "second" {
+  filename = "${path.module}/second.txt"
+  content  = "The first file is at: ${local_file.first.filename}"
+}
+
+```
+
+The important expression is:
+
+```
+local_file.first.filename
+```
+
+It means: access the `filename` attribute of the resource named `first`.
+
+Terraform detects this reference and automatically creates an implicit dependency. It knows that the first resource must be processed before the second.
+
+### When do you use `depends_on`?
+
+Use it when a dependency exists but Terraform cannot infer it from a resource reference.
+
+```
+resource "local_file" "second" {
+  filename = "${path.module}/second.txt"
+  content  = "Second file"
+
+  depends_on = [local_file.first]
+}
+```
+
+Normally, prefer implicit dependencies through references. Add `depends_on` only when necessary.
+
+## 4. One interview question
+
+You have two Terraform resources. Resource B uses `local_file.a.filename` in its configuration. What does Terraform do?
+
+Creates B before A
+
+Automatically detects the dependency and processes A first
+
+Always creates both at exactly the same time
+
+Requires `depends_on` in every case
+
+Check answer
+
+After this, we'll move to Lesson 4: Terraform modules—a key skill for reusable infrastructure code.
